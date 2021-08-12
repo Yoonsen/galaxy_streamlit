@@ -1,6 +1,6 @@
 import streamlit as st
 import dhlab.nbtext as nb
-import graph_networkx_louvain as gnl
+import gnl as gnl
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -40,6 +40,7 @@ def show_data(data):
     st.write('som tabell')
     st.write(data.style.background_gradient())
 
+    
 
 image = Image.open('NB-logo-no-eng-svart.png')
 st.image(image, width = 200)
@@ -65,7 +66,7 @@ fig, ax = plt.subplots()
 if nx.is_empty(Graph):
     st.write("tom graf")
 else:
-    gnl.show_graph(Graph, spread = spread, fontsize = fontsize)
+    gnl.show_graph(Graph, spread = spread, fontsize = fontsize, show_borders = [])
     st.pyplot(fig)
 
 comm = gnl.community_dict(Graph)

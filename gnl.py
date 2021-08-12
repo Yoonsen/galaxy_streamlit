@@ -118,7 +118,8 @@ def draw_graph_centrality2(G, Subsets=[],  h=15, v=10, deltax=0, deltay=0, fonts
                           edge_color='olive',
                            edge_alpha = 0.1,
                           colstart=0.2,
-                          coldark=0.5):
+                          coldark=0.5,
+                          show_borders = None):
     
     from pylab import rcParams
     import matplotlib.pyplot as plt
@@ -135,6 +136,14 @@ def draw_graph_centrality2(G, Subsets=[],  h=15, v=10, deltax=0, deltay=0, fonts
     ax = plt.subplot()
     ax.set_xticks([])
     ax.set_yticks([])
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    for spine in show_borders:
+        ax.spines[spine].set_visible(True)
+        ax.spines[spine].set_color("grey")
     #G = G.subgraph(subnodes)
     glob_col = sns.hls_palette(len(G), h=colstart, l=coldark)[0]
     pos = nx.spring_layout(G, k=k)
@@ -419,8 +428,8 @@ def make_collocation_graph(target, top = 15, urns=[], cutoff=0, cut_val=2, befor
     
     return Ice
 
-def show_graph(G, spread=0.2, fontsize=10, deltax=0, deltay=0):
-    return draw_graph_centrality2(G, mcommunity(G),k = spread, fontsize=fontsize, deltax=deltax, deltay=deltay)
+def show_graph(G, spread=0.2, fontsize=10, deltax=0, deltay=0, show_borders = ["left", "bottom"]):
+    return draw_graph_centrality2(G, mcommunity(G),k = spread, fontsize=fontsize, deltax=deltax, deltay=deltay, show_borders = show_borders)
 
 def show_cliques(G):
     C = make_cliques_from_graph(G.to_undirected())

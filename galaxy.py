@@ -80,7 +80,7 @@ st.write(
             'betweenness':{x[0]:x[1] for x in nb.central_betweenness_characters(Graph, n = centrality_size)},
             'centrality':{x[0]:x[1] for x in nb.central_characters(Graph, n = centrality_size)}
         }
-    )
+    ).style.background_gradient()
 )
 
 #st.write(gnl.show_cliques(Graph))

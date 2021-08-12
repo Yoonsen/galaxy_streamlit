@@ -1,6 +1,6 @@
 import streamlit as st
 import dhlab.nbtext as nb
-import dhlab.graph_networkx_louvain as gnl
+import graph_networkx_louvain as gnl
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt

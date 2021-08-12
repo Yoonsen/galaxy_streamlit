@@ -55,7 +55,7 @@ cutoff = st.sidebar.number_input('cutoff', min_value = 12, max_value =24, value 
 lang = st.sidebar.selectbox('lang',['nob', 'eng', 'ger'])
 fontsize = st.sidebar.number_input('fontsize', min_value = 0, max_value = 32, value = 12)
 spread = st.sidebar.number_input('spread', min_value = 0.0, max_value = 2.6, value = 1.2)
-
+centrality_size = st.sidebar.number_input('centrality', min_value = 10, max_value = 100, value = 12)
 
 words = st.text_input('Ord adskilt med komma', 'demokrati')
 
@@ -69,5 +69,18 @@ else:
     st.pyplot(fig)
 
 comm = gnl.community_dict(Graph)
+
+st.write('### Clustre')
 st.write('\n\n'.join(['**{label}** {value}'.format(label = key, value = ', '.join(comm[key])) for key in comm]))
+
+st.write('### Sentralitet')
+st.write(
+    pd.DataFrame(
+        {
+            'betweenness':{x[0]:x[1] for x in nb.central_betweenness_characters(Graph, n = centrality_size)},
+            'centrality':{x[0]:x[1] for x in nb.central_characters(Graph, n = centrality_size)}
+        }
+    )
+)
+
 #st.write(gnl.show_cliques(Graph))

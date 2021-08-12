@@ -45,40 +45,5 @@ st.markdown('Se mer om å drive analytisk DH på [DHLAB-siden](https://nbviewer.
 
 
 st.title('Galakser')
-
-
-#ax = df.plot(figsize = (10,6 ), lw = 5, alpha=0.8)
-#ax.spines["top"].set_visible(False)
-#ax.spines["right"].set_visible(False)
-
-#ax.spines["bottom"].set_color("grey")
-#ax.spines["left"].set_color("grey")
-#ax.spines["bottom"].set_linewidth(3)
-#ax.spines["left"].set_linewidth(3)
-#ax.legend(loc='upper left', frameon=False)
-#ax.spines["left"].set_visible(False)
-#st.pyplot()
-st.line_chart(df)
-
-#st.line_chart(tot)
-
-
-#if st.button('Sjekk fordeling i bøker'):
-if antall > 0:
-    
-    wordlist = allword
-    
-    urns = {w:nb.book_urn(words=[w], ddk = ddk, period = (period_slider[0], period_slider[1]), limit = antall) for w in wordlist}
-    #data = {w: nb.aggregate_urns(urns[w]) for w in wordlist}
-    #st.write([(w,urns[w]) for w in wordlist])
-    urner = lambda w: [x[0] for x in urns[w]]
-    #st.write(urner(wordlist[0]))
-    data = {'bok ' + w:nb.word_freq(urner(w), wordlist) for w in wordlist}
-
-    st.markdown("### Bøker som inneholder en av _{ws}_ i kolonnene, ordfrekvens i radene".format(ws = ', '.join(wordlist)))
-    
-    st.write('En diagonal indikerer at ordene gjensidig utelukker hverandre')
-    
-    st.write(nb.frame(data).transpose().fillna(0))
-
-    #st.write(df.loc[wordlist].fillna(0))
+st.input('')
+Graph = 

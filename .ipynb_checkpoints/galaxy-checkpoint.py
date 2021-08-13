@@ -84,4 +84,6 @@ st.write(
     ).style.background_gradient()
 )
 
-#st.write(gnl.show_cliques(Graph))
+st.write('### klikkstruktur')
+cliques = gnl.kcliques(Graph.to_undirected())
+st.write('\n\n'.join(["{a}: {b}".format(a = '-'.join([str(x) for x in key]), b = ', '.join(cliques[key])) for key in cliques]))

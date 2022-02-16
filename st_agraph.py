@@ -10,23 +10,38 @@ from streamlit_agraph import agraph, TripleStore, Config, Node, Edge
 
 #url = "http://35.228.68.102.nip.io/galaxies/query"
 #url = "http://35.228.68.102/galaxies/query"
-url = "https://beta.nb.no/dhlab/galaxies/query"
+url = "https://api.nb.no/dhlab/nb_ngram_galaxies/galaxies/query"
 
-def create_nodes_and_edges_config(g):
+colors =  ['#DC143C','#FFA500',
+           '#F0E68C','#BC8F8F','#32CD32',
+           '#D2691E','#3CB371','#00CED1',
+           '#00BFFF','#8B008B','#FFC0CB',
+           '#FF00FF','#FAEBD7']
+
+def word_to_colors(comm):
+    word_to_color = dict()
+    for i, e in enumerate(comm.values()):
+        for x in e:
+            word_to_color[x] = colors[i % len(colors)]
+    return word_to_color
+
+
+def create_nodes_and_edges_config(g, community_dict):
     """create nodes and edges from a networkx graph for streamlit agraph, classes Nodes, Edges and Config must be imported"""
+    cmap = word_to_colors(community_dict)
     nodes = []
     edges = []
     for i in g.nodes(data = True):
-        nodes.append(Node(id=i[0], size=100) )
+        nodes.append(Node(id=i[0], size=100, color=cmap[i[0]]) )
     for i in g.edges(data = True):
-        edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "blue"))
+        edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
 
     config = Config(height=500,
-                width=700, 
                 nodeHighlightBehavior=True,
                 highlightColor="#F7A7A6", 
                 directed=True, 
                 collapsible=True)
+    
     return nodes, edges, config
 
 
@@ -49,7 +64,9 @@ def word_graph(word = None, cutoff = 20, corpus = 'all'):
         nodes = graph['nodes']
         edges = graph['links']
         for edge in edges:
-            edgelist += [(nodes[edge['source']]['name'], nodes[edge['target']]['name'], abs(edge['value']))]
+            source, target = (nodes[edge['source']]['name'], nodes[edge['target']]['name'])
+            if source.isalnum() and target.isalnum():
+                edgelist += [(source, target, abs(edge['value']))]
         G.add_weighted_edges_from(edgelist)
     return G
 
@@ -88,60 +105,46 @@ def galaxy(word, lang='nob', corpus = 'all', cutoff = 16):
     cliques = gnl.kcliques(res.to_undirected())
     return res, comm, cliques
 
-@st.cache(suppress_st_warning=True, show_spinner = False)
-def show_data(data):
-    fontsize = 12
-
-    fig, ax = plt.subplots() #nrows=2, ncols=2)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-
-    ax.spines["bottom"].set_color("grey")
-    ax.spines["left"].set_color("grey")
-    ax.spines["bottom"].set_linewidth(0.5)
-    ax.spines["left"].set_linewidth(0.3)
-    ax.legend(loc='upper left', frameon=False)
-    ax.spines["left"].set_visible(False)
-
-    plt.rcParams.update({'font.size': 12,
-                        'font.family': 'monospace',
-                        'font.monospace':'Courier'})
-
-    plt.legend(loc = 2, prop = {
-        'size': fontsize})
-    #plt.xlabel('Ordliste', fontsize= fontsize*0.8)
-    #plt.ylabel('Frekvensvekt', fontsize= fontsize*0.8)
-    data.plot(ax=ax, figsize = (8,4), kind='bar', rot=20)
-
-    st.pyplot(fig)
-
-    st.write('som tabell')
-    st.write(data.style.background_gradient())
 
     
+st.set_page_config(layout="wide")
 
-image = Image.open('NB-logo-no-eng-svart.png')
-st.image(image, width = 200)
-st.markdown("""Les mer om DH på [DHLAB-siden](https://nbviewer.jupyter.org/github/DH-LAB-NB/DHLAB/blob/master/DHLAB_ved_Nasjonalbiblioteket.ipynb), og korpusanalyse via web [her](https://beta.nb.no/korpus/)
-
-Data er hentet fra NBs trigrambase for norsk, og fra Googles trigrambase for engelsk og tysk""")
+image = Image.open("DHlab_logo_web_en_black.png")
+st.sidebar.image(image)
+st.sidebar.markdown("""Les mer om DH ved Nasjonalbiblioteket på [DHLAB-siden](https://nb.no/dh-lab)""")
 
 
 st.title('Ordnettverk')
 
-#st.sidebar.title('Parametre')
-cutoff = st.sidebar.number_input('Cutoff', min_value = 12, max_value =24, value = 16)
-lang = st.sidebar.selectbox('Språk-kode',['nob', 'eng', 'ger'])
-fontsize = st.sidebar.number_input('Fontstørrelse', min_value = 0, max_value = 32, value = 12)
-spread = st.sidebar.number_input('Spredning av grafen', min_value = 0.0, max_value = 2.6, value = 1.2)
-centrality_size = st.sidebar.number_input('Sentralitet', min_value = 10, max_value = 100, value = 12)
-node_number = st.sidebar.number_input('Vis antall noder ved tekstvisning', min_value = 5, value = 50)
-show_graph = st.sidebar.checkbox('Tegn grafen', value = True)
-corpus = st.sidebar.selectbox('Bøker eller aviser', ['bok', 'avis', 'begge'])
+st.sidebar.title('Parametre')
+
+cutoff = st.sidebar.number_input('Tilfang av noder', min_value = 12, max_value =24, value = 18, 
+                                 help="Angi et tall mellom 12 og 24 - jo større, jo fler noder -"
+                                 " effektiv kun for norsk 'nob'")
+
+lang = st.sidebar.selectbox('Språk',['nob', 'eng', 'ger'], 
+                            help="language code - "
+                            "Data for English ('eng') and German ('ger') are fetched from Google trigrams 2013, see Google N-gram viewer https://books.google.com/ngrams")
+#fontsize = st.sidebar.number_input('Fontstørrelse', min_value = 0, max_value = 32, value = 12)
+#spread = st.sidebar.number_input('Spredning av grafen', min_value = 0.0, max_value = 2.6, value = 1.2)
+
+#centrality_size = st.sidebar.number_input('Størrelse på tabell', min_value = 10, max_value = 500, value = 12, 
+#                                          help="How many rows to show in table for sorted centrality")
+
+show_graph = st.sidebar.checkbox('Visualisering av graf', value = True, help="Visualize the graph")
+
+node_number = 50
+if not show_graph:
+    node_number = st.sidebar.number_input('Antall noder å vise ved tekstvisning', min_value = 5, value = 50, 
+                                     help="Specify number of nodes to show if graph is not visualized")
+
+
+
+corpus = st.sidebar.selectbox('Bøker eller aviser', ['begge', 'bok', 'avis' ], help="Choose between books and newspapers or both, only for language is norwegian 'nob'")
 if corpus == 'begge':
     corpus = 'all'
 
-words = st.text_input('Skriv inn ett ord eller flere adskilt med komma', 'demokrati')
+words = st.text_input('Skriv inn ett ord eller flere adskilt med komma. Det skilles mellom store og små bokstaver', 'frihet')
 
 Graph, comm, cliques = galaxy(words, lang = lang, cutoff = cutoff, corpus = corpus)
 
@@ -151,7 +154,7 @@ if nx.is_empty(Graph):
 elif show_graph:
     #gnl.show_graph(Graph, spread = spread, fontsize = fontsize, show_borders = [])
     #st.pyplot(fig)
-    nodes, edges, config = create_nodes_and_edges_config(Graph)
+    nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
     agraph(nodes, edges, config)
 else:
     nodes = list(Graph.nodes)
@@ -160,11 +163,20 @@ else:
                 {', '.join(nodes[:node_number])}""")
 
 
+
+    
+
+
+#------------------------------------------ Clustre -------------------------------###
+
+st.write('### Clustre')
+st.write('\n\n'.join(['**{label}** {value}'.format(label = key, value = ', '.join(comm[key])) for key in comm]))
+
 #------------------------------------------- Path ---------------------------------###############
 
-st.markdown("### Korteste sti")
-fra = st.text_input('Fra:', "")
-til = st.text_input('Til:', "")
+st.markdown("### Korteste sti mellom to noder")
+fra = st.text_input('Fra:', "", help="startnode")
+til = st.text_input('Til:', "", help = "sluttnode")
 if fra != "" and til != "":
     pth = path(Graph, source = fra, target = til)
     st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
@@ -177,26 +189,8 @@ if fra != "" and til != "":
     pth = path(Graph.to_undirected(), source = fra, target = til)
     st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
     
-    
-
-
-#------------------------------------------ Clustre -------------------------------###
-
-st.write('### Clustre')
-st.write('\n\n'.join(['**{label}** {value}'.format(label = key, value = ', '.join(comm[key])) for key in comm]))
-
-
 #----------------------------------------- cent
 
-st.write('### Sentralitet')
-st.write(
-    pd.DataFrame(
-        {
-            'betweenness':{x[0]:x[1] for x in nb.central_betweenness_characters(Graph, n = centrality_size)},
-            'centrality':{x[0]:x[1] for x in nb.central_characters(Graph, n = centrality_size)}
-        }
-    ).style.background_gradient()
-)
 
 st.write('### klikkstruktur')
 

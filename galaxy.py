@@ -44,8 +44,7 @@ def show_data(data):
 
 image = Image.open('NB-logo-no-eng-svart.png')
 st.image(image, width = 200)
-st.markdown("""Se mer om å drive analytisk DH på [DHLAB-siden](https://nbviewer.jupyter.org/github/DH-LAB-NB/DHLAB/blob/master/DHLAB_ved_Nasjonalbiblioteket.ipynb), og korpusanalyse via web [her](https://beta.nb.no/korpus/)
-
+st.markdown("""Les mer om DH på [DHLAB-siden](https://nb.no/dh-lab)
 Data er hentet fra NBs trigrambase for norsk, og fra Googles trigrambase for engelsk og tysk""")
 
 

@@ -33,16 +33,16 @@ def create_nodes_and_edges_config(g, community_dict):
     edges = []
     cent = nx.degree_centrality(g)
     for i in g.nodes(data = True):
-        nodes.append(Node(id=i[0], label=i[0], size=100*cent[i[0]], color=cmap[i[0]], zoom=24) )
+        nodes.append(Node(id=i[0], label=i[0], size=100*cent[i[0]], color=cmap[i[0]]) )
     for i in g.edges(data = True):
         edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
 
     config = Config(
-            # width=600, height=800,
-                nodeHighlightBehavior=False,
-                highlightColor="#F7A7A6", 
+                #width=700, height=900,
                 directed=True, 
-                collapsible=False)
+                collapsible=True,
+            
+    )
     
     return nodes, edges, config
 
@@ -109,7 +109,7 @@ def galaxy(word, lang='nob', corpus = 'all', cutoff = 16):
 
 
     
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Nettverk", layout="wide")
 
 head_col1, head_col2, head_col3 = st.columns([3,1,1])
 
@@ -143,17 +143,18 @@ with data_col1:
 
     fig, ax = plt.subplots()
     if nx.is_empty(Graph):
-        st.write("tom graf")
+        st.write(" -- ingen treff --")
     else:
-        #gnl.show_graph(Graph, spread = spread, fontsize = fontsize, show_borders = [])
-        #st.pyplot(fig)
         st.write("### Graf")
+        
+        # plot fra dhlab
+        #gnl.show_graph(Graph, spread = 1.2, fontsize = 12, show_borders = [])
+        #st.pyplot(fig)
+        
+        # plot med d3
         nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
         agraph(nodes, edges, config)
-
-
-
-    
+        
 
 with data_col2:
     #------------------------------------------ Clustre -------------------------------###
@@ -178,10 +179,27 @@ st.markdown("### Korteste sti mellom to noder")
 
 scol1,_, scol2 = st.columns([3,1,3])
 
+
+from_word = ""
+to_word = ""
+
+ws = [x.strip() for x in words.split(',')]
+
+if len(ws) > 1:
+    from_word = ws[0]
+    to_word = ws[1]
+else:
+    try:
+        cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
+        from_word = cent.iloc[0].name
+        to_word = cent.iloc[1].name
+    except:
+        pass
+    
 with scol1:
-    fra = st.text_input('Fra:', "", help = "startnode")
+    fra = st.text_input('Fra:', from_word, help = "startnode")
 with scol2:
-    til = st.text_input('Til:', "", help = "sluttnode")
+    til = st.text_input('Til:', to_word, help = "sluttnode")
 
 if fra != "" and til != "":
     pth = path(Graph, source = fra, target = til)

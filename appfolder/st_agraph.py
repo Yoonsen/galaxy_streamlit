@@ -151,7 +151,7 @@ with data_col1:
         #st.pyplot(fig)
         
         # plot med d3
-       agraph(nodes, edges, config)
+        agraph(nodes, edges, config)
         
 
 with data_col2:

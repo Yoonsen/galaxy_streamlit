@@ -36,7 +36,8 @@ def create_nodes_and_edges_config(g, community_dict):
     for i in g.edges(data = True):
         edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
 
-    config = Config(width=600, height=800,
+    config = Config(
+            # width=600, height=800,
                 nodeHighlightBehavior=False,
                 highlightColor="#F7A7A6", 
                 directed=True, 
@@ -119,7 +120,9 @@ with head_col3:
     image = Image.open("DHlab_logo_web_en_black.png")
     st.image(image)
 
-p_col1, p_col2, p_col3 = st.columns(3)
+st.markdown("---")
+    
+p_col1, p_col2, p_col3 = st.columns([2,1,1])
 with p_col1:
     words = st.text_input('Skriv inn ett ord eller flere adskilt med komma', 'frihet', help=" Det skilles mellom store og små bokstaver")
 with p_col2:
@@ -128,9 +131,7 @@ with p_col2:
         corpus = 'all'
 
 with p_col3:
-    cutoff = st.number_input('Tilfang av noder', min_value = 12, max_value =24, value = 18, 
-                                 help="Angi et tall mellom 12 og 24 - jo større, jo fler noder -"
-                                 " effektiv kun for norsk 'nob'")
+    cutoff = st.number_input('Tilfang av noder', min_value = 12, max_value =24, value = 18, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
 
 
 data_col1, data_col2 = st.columns(2)
@@ -170,9 +171,17 @@ with data_col2:
 
 #------------------------------------------- Path ---------------------------------###############
 
+
+
 st.markdown("### Korteste sti mellom to noder")
-fra = st.text_input('Fra:', "", help = "startnode")
-til = st.text_input('Til:', "", help = "sluttnode")
+
+scol1,_, scol2 = st.columns([3,1,3])
+
+with scol1:
+    fra = st.text_input('Fra:', "", help = "startnode")
+with scol2:
+    til = st.text_input('Til:', "", help = "sluttnode")
+
 if fra != "" and til != "":
     pth = path(Graph, source = fra, target = til)
     st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")

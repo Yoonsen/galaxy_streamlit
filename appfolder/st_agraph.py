@@ -133,9 +133,10 @@ with p_col3:
     cutoff = st.number_input('Tilfang av noder', min_value = 10, max_value =24, value = 12, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
 
 
-data_col1, data_col2 = st.columns(2)
+data_col1, data_col2 = st.columns([3,2])
 
 Graph, comm, cliques = galaxy(words, lang = 'nob', cutoff = cutoff, corpus = corpus)
+nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
 
 with data_col1:
 
@@ -150,8 +151,7 @@ with data_col1:
         #st.pyplot(fig)
         
         # plot med d3
-        nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
-        agraph(nodes, edges, config)
+       agraph(nodes, edges, config)
         
 
 with data_col2:

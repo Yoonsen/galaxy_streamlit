@@ -38,10 +38,8 @@ def create_nodes_and_edges_config(g, community_dict):
         edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
 
     config = Config(
-                #width=700, height=900,
-                directed=True, 
-                collapsible=True,
-            
+        width=1000, height=1000,
+        directed=True, 
     )
     
     return nodes, edges, config
@@ -132,7 +130,7 @@ with p_col2:
         corpus = 'all'
 
 with p_col3:
-    cutoff = st.number_input('Tilfang av noder', min_value = 12, max_value =24, value = 18, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
+    cutoff = st.number_input('Tilfang av noder', min_value = 10, max_value =24, value = 12, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
 
 
 data_col1, data_col2 = st.columns(2)

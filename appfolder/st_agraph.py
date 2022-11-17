@@ -31,8 +31,9 @@ def create_nodes_and_edges_config(g, community_dict):
     cmap = word_to_colors(community_dict)
     nodes = []
     edges = []
+    cent = nx.degree_centrality(g)
     for i in g.nodes(data = True):
-        nodes.append(Node(id=i[0], label=i[0], size=10, color=cmap[i[0]]) )
+        nodes.append(Node(id=i[0], label=i[0], size=100*cent[i[0]], color=cmap[i[0]], zoom=24) )
     for i in g.edges(data = True):
         edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
 
@@ -110,7 +111,7 @@ def galaxy(word, lang='nob', corpus = 'all', cutoff = 16):
     
 st.set_page_config(layout="wide")
 
-head_col1,_,_,head_col2, head_col3 = st.columns(5)
+head_col1, head_col2, head_col3 = st.columns([3,1,1])
 
 with head_col1:
     st.title('Ordnettverk')

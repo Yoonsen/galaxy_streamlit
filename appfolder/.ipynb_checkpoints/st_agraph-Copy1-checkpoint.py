@@ -33,13 +33,18 @@ def create_nodes_and_edges_config(g, community_dict):
     edges = []
     cent = nx.degree_centrality(g)
     for i in g.nodes(data = True):
-        nodes.append(Node(id=i[0], label=i[0], size=100*cent[i[0]], color=cmap[i[0]]) )
+        nodes.append(Node(id=i[0], label=i[0], size=100*cent[i[0]], color=cmap[i[0]], zoom=24) )
     for i in g.edges(data = True):
         edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
 
     config = Config(
-        width=1500, height=1000,
-        directed=True, 
+                width=700, height=900,
+                nodeHighlightBehavior=False,
+                highlightColor="#F7A7A6", 
+                directed=True, 
+                collapsible=True,
+                autoScale = True,
+                autoResize = True
     )
     
     return nodes, edges, config
@@ -107,15 +112,14 @@ def galaxy(word, lang='nob', corpus = 'all', cutoff = 16):
 
 
     
-st.set_page_config(page_title="Nettverk", layout="wide")
+st.set_page_config(layout="wide")
 
 head_col1, head_col2, head_col3 = st.columns([3,1,1])
 
 with head_col1:
     st.title('Ordnettverk')
-    st.markdown("""Les mer om [DH ved Nasjonalbiblioteket](https://nb.no/dh-lab)""")
 with head_col2:
-    pass
+    st.markdown("""Les mer om [DH ved Nasjonalbiblioteket](https://nb.no/dh-lab)""")
 with head_col3:
     image = Image.open("DHlab_logo_web_en_black.png")
     st.image(image)
@@ -131,42 +135,40 @@ with p_col2:
         corpus = 'all'
 
 with p_col3:
-    cutoff = st.number_input('Tilfang av noder', min_value = 10, max_value =24, value = 12, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
+    cutoff = st.number_input('Tilfang av noder', min_value = 12, max_value =24, value = 18, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
 
 
-data_col1, data_col2, data_col3, data_col4 = st.tabs(["Graf", "Clustre", "Klikkstruktur", "Sti mellom noder"])
+data_col1, data_col2 = st.columns(2)
 
 Graph, comm, cliques = galaxy(words, lang = 'nob', cutoff = cutoff, corpus = corpus)
-nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
-
 
 with data_col1:
 
     fig, ax = plt.subplots()
     if nx.is_empty(Graph):
-        st.write(" -- ingen treff --")
+        st.write("tom graf")
     else:
-        #st.write("### Graf")
-        
-        # plot fra dhlab
-        #gnl.show_graph(Graph, spread = 1.2, fontsize = 12, show_borders = [])
+        #gnl.show_graph(Graph, spread = spread, fontsize = fontsize, show_borders = [])
         #st.pyplot(fig)
-        
-        # plot med d3
+        st.write("### Graf")
+        nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
         agraph(nodes, edges, config)
-        
+
+
+
+    
 
 with data_col2:
     #------------------------------------------ Clustre -------------------------------###
 
-    #st.write('### Clustre')
+    st.write('### Clustre')
     st.write('\n\n'.join(['**{label}** {value}'.format(label = key, value = ', '.join(comm[key])) for key in comm]))
 
 
     #----------------------------------------- cent
 
-with data_col3:
-    #st.write('### Klikkstruktur')
+
+    st.write('### Klikkstruktur')
 
     st.write('\n\n'.join(["{a}: {b}".format(a = '-'.join([str(x) for x in key]), b = ', '.join(cliques[key])) for key in cliques]))
 
@@ -174,41 +176,41 @@ with data_col3:
 #------------------------------------------- Path ---------------------------------###############
 
 
-with data_col4:
-    #st.markdown("### Korteste sti mellom to noder")
 
-    scol1,_, scol2 = st.columns([3,1,3])
+st.markdown("### Korteste sti mellom to noder")
+
+scol1,_, scol2 = st.columns([3,1,3])
 
 
-    from_word = ""
-    to_word = ""
+from_word = ""
+to_word = ""
 
-    ws = [x.strip() for x in words.split(',')]
+ws = [x.strip() for x in words.split(',')]
 
-    if len(ws) > 1:
-        from_word = ws[0]
-        to_word = ws[1]
-    else:
-        try:
-            cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
-            from_word = cent.iloc[0].name
-            to_word = cent.iloc[1].name
-        except:
-            pass
+if len(ws) > 1:
+    from_word = ws[0]
+    to_word = ws[1]
+else:
+    cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
+    try:
+        from_word = cent.iloc[0].name
+        to_word = cent.iloc[1].name
+    except:
+        pass
+    
+with scol1:
+    fra = st.text_input('Fra:', from_word, help = "startnode")
+with scol2:
+    til = st.text_input('Til:', to_word, help = "sluttnode")
 
-    with scol1:
-        fra = st.text_input('Fra:', from_word, help = "startnode")
-    with scol2:
-        til = st.text_input('Til:', to_word, help = "sluttnode")
-
-    if fra != "" and til != "":
-        pth = path(Graph, source = fra, target = til)
-        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
-        pth = path(Graph.to_undirected(), source = fra, target = til)
-        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
-        x = len(pth) 
-        st.markdown("### Flere stier")
-        pth = path(Graph, source = fra, target = til)
-        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
-        pth = path(Graph.to_undirected(), source = fra, target = til)
-        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+if fra != "" and til != "":
+    pth = path(Graph, source = fra, target = til)
+    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+    pth = path(Graph.to_undirected(), source = fra, target = til)
+    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+    x = len(pth) 
+    st.markdown("### Flere stier")
+    pth = path(Graph, source = fra, target = til)
+    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+    pth = path(Graph.to_undirected(), source = fra, target = til)
+    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordnettverk-deployment
+  labels:
+    app: ordnettverk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordnettverk
+  template:
+    metadata:
+      labels:
+        app: ordnettverk
+    spec:
+      containers:
+      - name: ordnettverk
+        image: gcr.io/norwegian-language-bank/ordnettverk:bbe671c1-a907-4c30-b0b5-4b7956342794
+        command: [ "/bin/bash" ]
+        args: [ "-c", "streamlit run st_agraph.py --server.port 8501 --server.baseUrlPath /ordnettverk --browser.gatherUsageStats=False"]
+        ports:
+        - containerPort: 8501
+        resources:
+          limits:
+            cpu: 250m
+            ephemeral-storage: 256Mi
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            ephemeral-storage: 256Mi
+            memory: 512Mi

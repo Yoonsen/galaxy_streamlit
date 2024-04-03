@@ -1,7 +1,5 @@
-pandas==1.0.1
-dhlab==0.7.5
+dhlab>2.0
 streamlit >= 1.5.1
-streamlit_agraph
 matplotlib
 numpy
 requests
@@ -9,7 +7,6 @@ IPython
 seaborn
 scipy
 networkx
-wordcloud
 community
 python-louvain
 Pillow

@@ -189,9 +189,10 @@ with data_col4:
         to_word = ws[1]
     else:
         try:
-            cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
-            from_word = cent.iloc[0].name
-            to_word = cent.iloc[1].name
+            #cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
+            #from_word = cent.iloc[0].name
+            #to_word = cent.iloc[1].name
+            st.write(ws)
         except:
             pass
 

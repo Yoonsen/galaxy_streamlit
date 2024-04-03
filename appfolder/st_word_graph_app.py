@@ -1,13 +1,16 @@
 import streamlit as st
-import dhlab.nbtext as nb
 import gnl as gnl
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-import plotly as py
 from PIL import Image
 import requests
-from streamlit_agraph import agraph, TripleStore, Config, Node, Edge
+import community
+import streamlit as st
+import streamlit.components.v1 as components
+import json
+
+
 
 #url = "http://35.228.68.102.nip.io/galaxies/query"
 #url = "http://35.228.68.102/galaxies/query"
@@ -26,31 +29,30 @@ def word_to_colors(comm):
             word_to_color[x] = colors[i % len(colors)]
     return word_to_color
 
-def create_nodes_and_edges_config(g, community_dict):
-    """create nodes and edges from a networkx graph for streamlit agraph, classes Nodes, Edges and Config must be imported"""
-    cmap = word_to_colors(community_dict)
-    nodes = []
-    edges = []
-    cent = nx.degree_centrality(g)
-    for i in g.nodes(data = True):
-        nodes.append(Node(id=i[0], label=i[0], size=100*cent[i[0]], color=cmap[i[0]], zoom=24) )
-    for i in g.edges(data = True):
-        edges.append(Edge(source=i[0], target=i[1], type="CURVE_SMOOTH", color = "#ADD8E6"))
-
-    config = Config(
-                width=700, height=900,
-                nodeHighlightBehavior=False,
-                highlightColor="#F7A7A6", 
-                directed=True, 
-                collapsible=True,
-                autoScale = True,
-                autoResize = True
-    )
+def make_write_graphs(word, folder = None ,cutoff = 50, template = "graph_template_force.html",corpus='all'):
+   
+    G = word_graph(word, cutoff = cutoff, corpus=corpus)
+    G.remove_edges_from(nx.selfloop_edges(G))
     
-    return nodes, edges, config
+    partition = community.best_partition(G.to_undirected())
+    
+    centrality = nx.degree_centrality(G.to_undirected())
+
+    data = {
+        "nodes": [{"id": node, "centrality": centrality[node],  "community": partition[node]} for node in G.nodes()],
+        "links": [{"source": u, "target": v} for u, v in G.edges()]
+    }
+    with open(template) as t:
+        template_html = t.read()
+    #print(template_html)
+    html = (template_html
+            .replace("NODES_FROM_DATA", json.dumps(data['nodes']))
+            .replace("LINKS_FROM_DATA", json.dumps(data['links']))
+           )
+    
+    return G, html
 
 
-@st.cache(suppress_st_warning=True, show_spinner = False)
 def word_graph(word = None, cutoff = 20, corpus = 'all'):
     """ corpus = bok, avis or all"""
     params = {
@@ -75,7 +77,7 @@ def word_graph(word = None, cutoff = 20, corpus = 'all'):
         G.add_weighted_edges_from(edgelist)
     return G
 
-@st.cache(suppress_st_warning=True, show_spinner = False)
+
 def path(graph = None, source = None, target = None):
     if nx.is_directed(graph):
         k = 'directed'
@@ -87,7 +89,7 @@ def path(graph = None, source = None, target = None):
         res = (source, target, 'nopath', [])
     return res
 
-@st.cache(suppress_st_warning=True, show_spinner = False)
+
 def paths(graph = None, source = None, target = None, cutoff = 3):
     if nx.is_directed(graph):
         k = 'directed'
@@ -99,7 +101,7 @@ def paths(graph = None, source = None, target = None, cutoff = 3):
         res = (source, target, 'nopath', [])
     return res
 
-@st.cache(suppress_st_warning=True, show_spinner = False, allow_output_mutation = True)
+
 def galaxy(word, lang='nob', corpus = 'all', cutoff = 16):
     if lang == 'nob':
         res = word_graph(word, corpus = corpus, cutoff = cutoff)
@@ -112,14 +114,15 @@ def galaxy(word, lang='nob', corpus = 'all', cutoff = 16):
 
 
     
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Nettverk", layout="wide")
 
 head_col1, head_col2, head_col3 = st.columns([3,1,1])
 
 with head_col1:
     st.title('Ordnettverk')
-with head_col2:
     st.markdown("""Les mer om [DH ved Nasjonalbiblioteket](https://nb.no/dh-lab)""")
+with head_col2:
+    pass
 with head_col3:
     image = Image.open("DHlab_logo_web_en_black.png")
     st.image(image)
@@ -135,40 +138,34 @@ with p_col2:
         corpus = 'all'
 
 with p_col3:
-    cutoff = st.number_input('Tilfang av noder', min_value = 12, max_value =24, value = 18, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
+    cutoff = st.number_input('Tilfang av noder', min_value = 10, max_value =24, value = 12, help="Angi et tall mellom 12 og 24 - jo større, jo fler noder")
 
 
-data_col1, data_col2 = st.columns(2)
+data_col1, data_col2, data_col3, data_col4 = st.tabs(["Graf", "Clustre", "Klikkstruktur", "Sti mellom noder"])
 
-Graph, comm, cliques = galaxy(words, lang = 'nob', cutoff = cutoff, corpus = corpus)
+Graph, G_html = make_write_graphs(words, cutoff = cutoff, corpus = corpus)
+
+#nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
+
 
 with data_col1:
-
-    fig, ax = plt.subplots()
-    if nx.is_empty(Graph):
-        st.write("tom graf")
-    else:
-        #gnl.show_graph(Graph, spread = spread, fontsize = fontsize, show_borders = [])
-        #st.pyplot(fig)
-        st.write("### Graf")
-        #nodes, edges, config = create_nodes_and_edges_config(Graph, comm)
-        #agraph(nodes, edges, config)
-
-
-
-    
+    components.html(G_html, height=1000)
+        
 
 with data_col2:
+    comm = gnl.community_dict(Graph)
+
     #------------------------------------------ Clustre -------------------------------###
 
-    st.write('### Clustre')
+    #st.write('### Clustre')
     st.write('\n\n'.join(['**{label}** {value}'.format(label = key, value = ', '.join(comm[key])) for key in comm]))
 
 
     #----------------------------------------- cent
 
-
-    st.write('### Klikkstruktur')
+with data_col3:
+    #st.write('### Klikkstruktur')
+    cliques = gnl.kcliques(Graph.to_undirected())
 
     st.write('\n\n'.join(["{a}: {b}".format(a = '-'.join([str(x) for x in key]), b = ', '.join(cliques[key])) for key in cliques]))
 
@@ -176,41 +173,41 @@ with data_col2:
 #------------------------------------------- Path ---------------------------------###############
 
 
+with data_col4:
+    #st.markdown("### Korteste sti mellom to noder")
 
-st.markdown("### Korteste sti mellom to noder")
-
-scol1,_, scol2 = st.columns([3,1,3])
+    scol1,_, scol2 = st.columns([3,1,3])
 
 
-from_word = ""
-to_word = ""
+    from_word = ""
+    to_word = ""
 
-ws = [x.strip() for x in words.split(',')]
+    ws = [x.strip() for x in words.split(',')]
 
-if len(ws) > 1:
-    from_word = ws[0]
-    to_word = ws[1]
-else:
-    cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
-    try:
-        from_word = cent.iloc[0].name
-        to_word = cent.iloc[1].name
-    except:
-        pass
-    
-with scol1:
-    fra = st.text_input('Fra:', from_word, help = "startnode")
-with scol2:
-    til = st.text_input('Til:', to_word, help = "sluttnode")
+    if len(ws) > 1:
+        from_word = ws[0]
+        to_word = ws[1]
+    else:
+        try:
+            cent = pd.DataFrame.from_dict(nx.degree_centrality(Graph), orient='index', columns =['centrality']).sort_values(by='centrality', ascending=False)
+            from_word = cent.iloc[0].name
+            to_word = cent.iloc[1].name
+        except:
+            pass
 
-if fra != "" and til != "":
-    pth = path(Graph, source = fra, target = til)
-    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
-    pth = path(Graph.to_undirected(), source = fra, target = til)
-    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
-    x = len(pth) 
-    st.markdown("### Flere stier")
-    pth = path(Graph, source = fra, target = til)
-    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
-    pth = path(Graph.to_undirected(), source = fra, target = til)
-    st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+    with scol1:
+        fra = st.text_input('Fra:', from_word, help = "startnode")
+    with scol2:
+        til = st.text_input('Til:', to_word, help = "sluttnode")
+
+    if fra != "" and til != "":
+        pth = path(Graph, source = fra, target = til)
+        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+        pth = path(Graph.to_undirected(), source = fra, target = til)
+        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+        x = len(pth) 
+        st.markdown("### Flere stier")
+        pth = path(Graph, source = fra, target = til)
+        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")
+        pth = path(Graph.to_undirected(), source = fra, target = til)
+        st.markdown(f"**{fra} - {til}** {pth[2]}: {', '.join(pth[3])}")

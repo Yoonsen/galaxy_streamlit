@@ -7,6 +7,6 @@ IPython
 seaborn
 scipy
 networkx
-community
 python-louvain
+community
 Pillow

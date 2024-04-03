@@ -1,6 +1,6 @@
 import streamlit as st
 import gnl as gnl
-import pandas as pd
+#import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
